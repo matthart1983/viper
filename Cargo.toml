@@ -1,0 +1,12 @@
+[package]
+name = "viper"
+version = "0.1.0"
+edition = "2021"
+description = "A fast Python interpreter written in Rust"
+
+[[bin]]
+name = "viper"
+path = "src/main.rs"
+
+[dependencies]
+rustc-hash = "2"
