@@ -111,6 +111,10 @@ pub enum Value {
     Dict(Vec<(Value, Value)>),
     None,
     Function(Rc<FunctionObj>),
+    NativeFunction {
+        name: Rc<String>,
+        func: fn(&[Value]) -> Result<Value, String>,
+    },
 }
 
 impl PartialEq for Value {
@@ -121,6 +125,7 @@ impl PartialEq for Value {
             (Value::String(a), Value::String(b)) => a == b,
             (Value::Boolean(a), Value::Boolean(b)) => a == b,
             (Value::List(a), Value::List(b)) => a == b,
+            (Value::NativeFunction { name: a, .. }, Value::NativeFunction { name: b, .. }) => a == b,
             (Value::None, Value::None) => true,
             _ => false,
         }
@@ -165,6 +170,7 @@ impl fmt::Display for Value {
             }
             Value::None => write!(f, "None"),
             Value::Function(func) => write!(f, "<function {:?}>", func.name),
+            Value::NativeFunction { name, .. } => write!(f, "<native:{}>", name),
         }
     }
 }
@@ -181,6 +187,7 @@ impl Value {
             Value::Dict(d) => !d.is_empty(),
             Value::None => false,
             Value::Function(_) => true,
+            Value::NativeFunction { .. } => true,
         }
     }
 }

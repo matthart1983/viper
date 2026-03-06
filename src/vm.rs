@@ -55,6 +55,14 @@ impl VM {
         self.suppress_output = suppress;
     }
 
+    pub fn set_global(&mut self, sym: Symbol, val: Value) {
+        self.globals.insert(sym, val);
+    }
+
+    pub fn get_global(&self, sym: Symbol) -> Option<&Value> {
+        self.globals.get(&sym)
+    }
+
     pub fn get_output(&self) -> &[String] {
         &self.output
     }
@@ -417,11 +425,32 @@ impl VM {
                         Value::Function(func_obj) => {
                             self.do_call(&func_obj, argc, func_idx)?;
                         }
+                        Value::NativeFunction { func, .. } => {
+                            let args: Vec<Value> = self.stack.drain(args_start..).collect();
+                            self.stack.pop(); // remove the placeholder at func_idx
+                            let result = func(&args)?;
+                            self.stack.push(result);
+                        }
                         _ => return Err(format!("{} is not callable", func_val)),
                     }
                 }
                 Op::CallGlobal(sym, argc) => {
                     let argc = argc as usize;
+
+                    // Check if it's a native function first
+                    let is_native = matches!(self.globals.get(&sym), Some(Value::NativeFunction { .. }));
+                    if is_native {
+                        let func = match self.globals.get(&sym) {
+                            Some(Value::NativeFunction { func, .. }) => *func,
+                            _ => unreachable!(),
+                        };
+                        let args_start = self.stack.len() - argc;
+                        let args: Vec<Value> = self.stack.drain(args_start..).collect();
+                        let result = func(&args)?;
+                        self.stack.push(result);
+                        continue;
+                    }
+
                     // Get the code+params directly via raw pointers — no Rc clone
                     let (code_ptr, param_slots_ptr, num_locals) = match self.globals.get(&sym) {
                         Some(Value::Function(f)) => (

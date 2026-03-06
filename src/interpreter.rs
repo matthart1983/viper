@@ -26,6 +26,10 @@ pub enum Value {
     Dict(Vec<(Value, Value)>),
     None,
     Function(Rc<FunctionObj>),
+    NativeFunction {
+        name: String,
+        func: fn(&[Value]) -> Result<Value, String>,
+    },
 }
 
 impl fmt::Display for Value {
@@ -66,6 +70,7 @@ impl fmt::Display for Value {
             }
             Value::None => write!(f, "None"),
             Value::Function(func) => write!(f, "<function {:?}>", func.name),
+            Value::NativeFunction { name, .. } => write!(f, "<native:{}>", name),
         }
     }
 }
@@ -82,6 +87,7 @@ impl Value {
             Value::Dict(d) => !d.is_empty(),
             Value::None => false,
             Value::Function(_) => true,
+            Value::NativeFunction { .. } => true,
         }
     }
 }
@@ -233,6 +239,10 @@ impl Interpreter {
 
     pub fn interner_mut(&mut self) -> &mut Interner {
         &mut self.interner
+    }
+
+    pub fn set_global(&mut self, name: Symbol, value: Value) {
+        self.env.set_global(name, value);
     }
 
     pub fn set_suppress_output(&mut self, suppress: bool) {
@@ -522,6 +532,9 @@ impl Interpreter {
                     Some(ControlFlow::Return(val)) => Ok(val),
                     _ => Ok(Value::None),
                 }
+            }
+            Value::NativeFunction { func, .. } => {
+                func(&args)
             }
             _ => Err(format!("{} is not callable", func)),
         }
