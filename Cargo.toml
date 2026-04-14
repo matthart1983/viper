@@ -1,8 +1,17 @@
 [package]
-name = "viper"
+name = "viper-py"
 version = "0.1.0"
 edition = "2021"
 description = "A fast Python interpreter written in Rust"
+license = "MIT"
+repository = "https://github.com/matthart1983/viper"
+readme = "README.md"
+keywords = ["python", "interpreter", "vm"]
+categories = ["compilers"]
+
+[lib]
+name = "viper"
+path = "src/lib.rs"
 
 [[bin]]
 name = "viper"
