@@ -229,12 +229,14 @@ pub struct Interpreter {
 
 impl Interpreter {
     pub fn new(interner: Interner) -> Self {
-        Interpreter {
+        let mut interp = Interpreter {
             env: Environment::new(),
             interner,
             output: Vec::new(),
             suppress_output: false,
-        }
+        };
+        crate::builtins::register_python_builtins_interp(&mut interp);
+        interp
     }
 
     pub fn interner_mut(&mut self) -> &mut Interner {

@@ -32,7 +32,7 @@ pub struct VM {
 
 impl VM {
     pub fn new(interner: Interner) -> Self {
-        VM {
+        let mut vm = VM {
             stack: Vec::with_capacity(256),
             code: std::ptr::null(),
             pc: 0,
@@ -44,7 +44,9 @@ impl VM {
             interner,
             output: Vec::new(),
             suppress_output: false,
-        }
+        };
+        crate::builtins::register_python_builtins_vm(&mut vm);
+        vm
     }
 
     pub fn interner_mut(&mut self) -> &mut Interner {
